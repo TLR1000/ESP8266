@@ -2,8 +2,8 @@
 #include <ESP8266WiFi.h>
 
 //voor wifi
-const char *ssid     = "Skynet";
-const char *password = "Andrea1234!";
+const char *ssid     = " ";
+const char *password = " !";
 
 // Set web server port number to 80
 WiFiServer server(80);
