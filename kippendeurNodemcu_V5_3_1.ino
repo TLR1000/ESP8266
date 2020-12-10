@@ -37,13 +37,13 @@
 #include <PubSubClient.h>
 
 //voor wifi
-const char *ssid     = "McSkynet";
-const char *password = "Andrea1234!";
+const char *ssid     = " ";
+const char *password = " !";
 
 //voor MQTT
 const char* mqtt_server   = "farmer.cloudmqtt.com";
-const char* mqtt_user     = "lkefkykr"; // voor productie
-const char* mqtt_password = "iic5KAq1oswc"; // voor productie
+const char* mqtt_user     = " "; // voor productie
+const char* mqtt_password = " "; // voor productie
 
 //reed schakelaar
 const int reedBoven = D5;
