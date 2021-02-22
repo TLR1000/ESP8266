@@ -10,6 +10,7 @@
  * -fuse: max tijd voor openen of sluiten luik 
  * 
  * Versions
+ * V5.3.2 Password include toegevoegd
  * V5.3.1 Bugfixes: MQTTSwitchLuik naming consistency
  * V5.3 MQTT uitgebreid met paramateriseren open/dicht en MQTT open/dicht
  * V5.2 MQTT toegevoegd
@@ -31,6 +32,8 @@
 // RX GPIO3
 // TX GPIO1 
 
+//Voor passwords
+#include "config.h"
 //Voor Wifi
 #include <ESP8266WiFi.h>
 //voor OTA
@@ -43,15 +46,6 @@
 //voor MQTT
 #include <PubSubClient.h>
 
-//voor wifi
-const char *ssid     = " ";
-const char *password = " ";
-
-//voor MQTT
-const char* mqtt_server   = "farmer.cloudmqtt.com";
-const char* mqtt_user     = " "; // voor productie
-const char* mqtt_password = " "; // voor productie
-
 //reed schakelaar
 const int reedBoven = D5;
 const int reedOnder = D6;
@@ -63,7 +57,7 @@ const int relaisM = D0;
 
 //voor NTP
 WiFiUDP udp;
-EasyNTPClient ntpClient(udp, "pool.ntp.org", ((2*60*60))); // 2 = GMT + 2 zomertijdcorrectie
+EasyNTPClient ntpClient(udp, "pool.ntp.org", ((1*60*60))); // 2 = GMT + 2 zomertijdcorrectie, 1 = GMT + 1 
 
 //voor MQTT
 WiFiClient espClient;
@@ -96,11 +90,12 @@ void setup() {
   while (!Serial) ; // wait for Arduino Serial Monitor
 
   //setup wifi
-  WiFi.begin(ssid, password);
+  WiFi.begin(ssid, passphrase);
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
   }
+  Serial.println("connected.");
   Serial.print("IP address: ");
   Serial.println(WiFi.localIP());
 
@@ -122,7 +117,7 @@ void setup() {
   client.setCallback(callback);
   
   //OTA
-  ArduinoOTA.setHostname("kippenhok");
+  ArduinoOTA.setHostname(myhostname);
   ArduinoOTA.onStart([]() {
     String type;
     if (ArduinoOTA.getCommand() == U_FLASH) {
@@ -467,9 +462,10 @@ boolean reconnect() {
   Serial.println("reconnect()");
 
   while (!client.connected()) {
-    Serial.print("Attempting MQTT connection...");
+    Serial.println("Attempting MQTT connection...");
     // Attempt to connect
     if (client.connect("ESP8266Client",mqtt_user,mqtt_password)) {  
+      Serial.println("Connected to MQTT server");
       // Once connected, publish an announcement...
       client.publish("outTopic","reconnected");
       delay(100); //wait for data to be published.
@@ -488,7 +484,7 @@ boolean reconnect() {
       Serial.println(" try again in 2 seconds");
       // Wait 2 seconds before retrying
       delay(2000);  
-  }
+    }
   return client.connected();
-}
+  }
 }
