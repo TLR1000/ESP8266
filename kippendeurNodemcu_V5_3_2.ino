@@ -10,7 +10,7 @@
  * -fuse: max tijd voor openen of sluiten luik 
  * 
  * Versions
- * V5.3.2 Password include toegevoegd
+ * V5.3.2 config.txt include toegevoegd (oa. passwords)
  * V5.3.1 Bugfixes: MQTTSwitchLuik naming consistency
  * V5.3 MQTT uitgebreid met paramateriseren open/dicht en MQTT open/dicht
  * V5.2 MQTT toegevoegd
