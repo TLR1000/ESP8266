@@ -1,0 +1,109 @@
+//TimeSync
+/*
+ Experiment: sync time from the network
+ */
+
+//Voor passwords
+#include "config.h"
+//Voor Wifi
+#include <ESP8266WiFi.h>
+//Voor NTP
+#include <EasyNTPClient.h>
+#include <WiFiUdp.h>
+//Voor interne Klok
+#include <TimeLib.h>
+
+//voor NTP
+WiFiUDP udp;
+EasyNTPClient ntpClient(udp, "pool.ntp.org", ((1*60*60))); // 2 = GMT + 2 zomertijdcorrectie, 1 = GMT + 1 
+
+//definitie en initiele instelling van de openingstijd
+int hourOpen;
+int hourClose;
+int minuteOpen;
+int minuteClose;
+
+
+void setup() {
+  //debug
+  Serial.begin(57600);
+  while (!Serial) ; // wait for Arduino Serial Monitor
+
+  //setup wifi
+  WiFi.begin(ssid, passphrase);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("connected.");
+  Serial.print("IP address: ");
+  Serial.println(WiFi.localIP());
+
+  //klok initialiseren
+  setClock(); 
+  
+  Serial.println("Ready");  
+}
+
+void loop() {
+  hourOpen = 10;
+  minuteOpen = 00;
+  hourClose = 20;
+  minuteClose = 51;
+  
+  Serial.print("Now is: ");Serial.print(day());Serial.print("-");Serial.print(month());Serial.print(" ");Serial.print(hour());Serial.print(":");Serial.print(minute());Serial.print(" weekday:");Serial.println(weekday());
+  
+  //recalc for the weekend
+  if (weekday() == 1 || weekday() == 7) {
+      hourOpen = hourOpen + 1;
+      Serial.println("weekend correctie: hourOpen is" + hourOpen);
+    }
+  
+  //open or close?
+  if( (((hour() * 100) + minute()) >= ((hourOpen * 100) + minuteOpen)) && (((hour() * 100) + minute()) < ((hourClose * 100) + minuteClose)) ){
+    //open     
+    Serial.println("open");
+  } else {
+    //dicht
+    Serial.println("dicht");
+    }
+    
+  delay(2000);
+}
+
+void setClock(){
+  Serial.println("setClock()");
+  int testSync = 1;
+  while (testSync > 0) {
+    Serial.println("setClock: syncClock() not ok - needs sync");
+    testSync = syncClock();
+  } 
+  Serial.println("setClock: syncClock() ok - synced");      
+}
+
+int syncClock(){ 
+  /*
+ * Zomertijd 2019 (Nederland). 
+ * Van: 02:00 zondag 31 maart
+ * Tot: 03:00 zondag 27 oktober
+ * Nog iets mee doen....
+ */
+  Serial.println("syncClock()");
+  unsigned long prevTime = now();
+  unsigned long UnixTime = ntpClient.getUnixTime();
+  Serial.println("prevTime : "+prevTime);
+  Serial.println("UnixTIme : "+UnixTime);
+  if (UnixTime < 1) { //client geeft soms 0 terug
+    Serial.println("UnixTIme invalid: "+UnixTime);
+    return 1;
+  }  
+  if (UnixTime > prevTime) {{
+    //klok instellen
+    setTime(UnixTime);
+  }
+    Serial.println("Clock bijgesteld");
+  } else {
+    Serial.println("Clock niet bijgesteld");
+  }  
+  return 0;
+}
