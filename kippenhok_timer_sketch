@@ -46,17 +46,28 @@ void setup() {
 }
 
 void loop() {
+  //times in GMT+1
   hourOpen = 10;
   minuteOpen = 00;
   hourClose = 20;
   minuteClose = 51;
   
-  Serial.print("Now is: ");Serial.print(day());Serial.print("-");Serial.print(month());Serial.print(" ");Serial.print(hour());Serial.print(":");Serial.print(minute());Serial.print(" weekday:");Serial.println(weekday());
+  Serial.print("Now is: ");Serial.print(day());Serial.print("-");Serial.print(month());Serial.print(" ");Serial.print(hour());Serial.print(":");Serial.print(minute());Serial.print(" GMT+1 weekday:");Serial.println(weekday());
   
   //recalc for the weekend
   if (weekday() == 1 || weekday() == 7) {
       hourOpen = hourOpen + 1;
-      Serial.println("weekend correctie: hourOpen is" + hourOpen);
+      Serial.print("weekend correctie: hourOpen is" + hourOpen);Serial.println(" GMT+1");
+    }
+
+  //recalc voor zomertijd (+1)
+  //om het simpel te houden: uurtje optellen bij open en close tijden
+  //2021: 28 maart - 31 oktober
+  //2022: 27 maart - 30 oktober
+  //2023: 26 maart - 29 oktober
+  if (((month() > 3||month() == 3) && day() >= 28) && ((month() < 10|| month() == 10) && day() < 31)){
+    hourOpen = hourOpen + 1;
+    Serial.println ("zomertijd correctie: hourOpen is " + hourOpen);Serial.println(" GMT+1");
     }
   
   //open or close?
