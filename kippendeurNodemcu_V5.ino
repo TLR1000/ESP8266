@@ -1,16 +1,16 @@
 //kippendeurNodemcu
 /*
- * Versie in productie: V5.3.1
+ * Versie in productie: V5.3.2
  * 
  * te fixen:
  * -pubsub same topic bug
  * -hourOpen en hourClose setten dmv. MQTT callback
  * -realtime luik bediening
- * -zomer/wintertijd
  * -fuse: max tijd voor openen of sluiten luik 
  * 
  * Versions
- * V5.3.2 config.txt include toegevoegd (oa. passwords)
+ * V5.3.3 Timer logica en berekeningen aangepast
+ * V5.3.2 Password e.a. include toegevoegd
  * V5.3.1 Bugfixes: MQTTSwitchLuik naming consistency
  * V5.3 MQTT uitgebreid met paramateriseren open/dicht en MQTT open/dicht
  * V5.2 MQTT toegevoegd
@@ -77,13 +77,18 @@ char MQTThourCloseCharArray[10];
 //voor de stand van de schakelaar
 String modus; 
 
-//definitie en initiele instelling van de openingstijd
+//declaratie openings- en sluitingstijd
 int hourOpen;
 int hourClose;
+int minuteOpen;
+int minuteClose;
 
 void setup() {
+  //times in GMT+1
   hourOpen = 8;
-  hourClose = 23;
+  minuteOpen = 30;
+  hourClose = 22;
+  minuteClose = 00;
   
   //debug
   Serial.begin(57600);
@@ -265,18 +270,34 @@ void loop() {
 }
 
 void autoBediening() {
-  if(hour() >= 9){
-    if(hour() < 21){
-      Serial.println("autoBediening: deurOpenDoen()");
-      deurOpenDoen();
-    } else {
-      Serial.println("autoBediening: deurDichtDoen()");
-      deurDichtDoen();
+  Serial.print("Now is: ");Serial.print(day());Serial.print("-");Serial.print(month());Serial.print(" ");Serial.print(hour());Serial.print(":");Serial.print(minute());Serial.print(" GMT+1 weekday:");Serial.println(weekday());
+  
+  //recalc for the weekend
+  if (weekday() == 1 || weekday() == 7) {
+      hourOpen = hourOpen + 1;
+      Serial.print("weekend correctie: hourOpen is" + hourOpen);Serial.println(" GMT+1");
     }
+
+  //recalc voor zomertijd (+1)
+  //om het simpel te houden: uurtje optellen bij open en close tijden
+  //2021: 28 maart - 31 oktober
+  //2022: 27 maart - 30 oktober
+  //2023: 26 maart - 29 oktober
+  if (((month() > 3||month() == 3) && day() >= 28) && ((month() < 10|| month() == 10) && day() < 31)){
+    hourOpen = hourOpen + 1;
+    Serial.println ("zomertijd correctie: hourOpen is " + hourOpen);Serial.println(" GMT+1");
+    }
+  
+  //open or close?
+  if( (((hour() * 100) + minute()) >= ((hourOpen * 100) + minuteOpen)) && (((hour() * 100) + minute()) < ((hourClose * 100) + minuteClose)) ){
+    //open     
+    Serial.println("autoBediening: deurOpenDoen()");
+    deurOpenDoen();
   } else {
-    Serial.println("autoBediening: deurdichtDoen()");
+    //dicht
+    Serial.println("autoBediening: deurDichtDoen()");
     deurDichtDoen();
-  }
+    }
 }
 
 String leesSchakelaar(){
@@ -425,10 +446,10 @@ void setClock(){
   Serial.println("setClock()");
   int testSync = 1;
   while (testSync > 0) {
-    Serial.println("setClock: syncClock() not ok");
+    Serial.println("setClock: syncClock() not ok - needs sync");
     testSync = syncClock();
   } 
-  Serial.println("setClock: syncClock() ok");      
+  Serial.println("setClock: syncClock() ok - synced");      
 }
 
 int syncClock(){ 
