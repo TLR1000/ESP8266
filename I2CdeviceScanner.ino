@@ -1,4 +1,12 @@
 // I2C Scanner
+/*
+The Wire.begin(); function initializes the I2C communication using the default SDA and SCL pins for your microcontroller. On the Wemos D1 mini (ESP8266), these are typically:
+SDA (D2, GPIO4)
+SCL (D1, GPIO5)
+The for loop iterates through possible I2C addresses, from 8 to 119/0x08 to 0x77. These are the standard 7-bit I2C address range for most devices.
+The address is printed in both decimal and hexadecimal formats.
+
+*/
 
 #include <Wire.h>
 
